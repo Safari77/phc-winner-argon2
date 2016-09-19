@@ -19,7 +19,7 @@ SRC_BENCH = src/bench.c
 SRC_GENKAT = src/genkat.c
 OBJ = $(SRC:.c=.o)
 
-CFLAGS += -std=c89 -pthread -O3 -Wall -g -Iinclude -Isrc
+CFLAGS += -std=c89 -pthread -O3 -Wall -g -Iinclude -Isrc -march=native -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fPIC -fstack-protector-strong
 CI_CFLAGS := $(CFLAGS) -Werror=declaration-after-statement -D_FORTIFY_SOURCE=2 \
 				-Wextra -Wno-type-limits -Werror -coverage -DTEST_LARGE_RAM
 
@@ -43,7 +43,7 @@ LIB_NAME=argon2
 ifeq ($(KERNEL_NAME), Linux)
 	LIB_EXT := so
 	LIB_CFLAGS := -shared -fPIC -fvisibility=hidden -DA2_VISCTL=1
-	SO_LDFLAGS := -Wl,-soname,libargon2.so.0
+	SO_LDFLAGS := -Wl,-soname,libargon2.so.0 -Wl,-z,relro -Wl,-z,now
 endif
 ifeq ($(KERNEL_NAME), $(filter $(KERNEL_NAME),FreeBSD NetBSD OpenBSD))
 	LIB_EXT := so
@@ -87,7 +87,7 @@ all: clean $(RUN) libs
 libs: $(LIB_SH) $(LIB_ST)
 
 $(RUN):	        $(SRC) $(SRC_RUN)
-		$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+		$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ -pie -Wl,-z,relro -Wl,-z,now
 
 $(BENCH):       $(SRC) $(SRC_BENCH)
 		$(CC) $(CFLAGS) $^ -o $@
